@@ -1,0 +1,5 @@
+-Q theories Evidence
+
+theories/Definitions.v
+theories/Theorems.v
+theories/Evidence.v
