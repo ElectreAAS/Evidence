@@ -39,10 +39,11 @@ Proof.
 Qed.
 
 Fixpoint is_substring needle haystack :=
-  match haystack with
-  | EmptyString => needle = EmptyString
-  | String _ h' => is_prefix needle haystack \/
-                   is_substring needle h'
+  match needle, haystack with
+  | EmptyString, _ => True
+  | _, EmptyString => False
+  | _, String _ h' => is_prefix needle haystack \/
+                      is_substring needle h'
   end.
 
 Theorem is_substring_refl : forall s, is_substring s s.
@@ -58,10 +59,11 @@ Add Relation String.string is_substring
 as Substring.
 
 Lemma sub_body : forall needle haystack, is_substring needle haystack =
-  match haystack with
-  | EmptyString => needle = EmptyString
-  | String _ h' => is_prefix needle haystack \/
-                   is_substring needle h'
+  match needle, haystack with
+  | EmptyString, _ => True
+  | _, EmptyString => False
+  | _, String _ h' => is_prefix needle haystack \/
+                      is_substring needle h'
   end.
 Proof.
   now destruct needle, haystack.
