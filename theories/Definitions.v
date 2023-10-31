@@ -1,21 +1,99 @@
-From Coq Require Export String.
-From Coq Require Export Ascii.
+From Coq Require Import Ascii.
+From Coq Require Import Classes.RelationClasses.
+From Coq Require Import String.
+
+Fixpoint is_prefix s1 s2 :=
+  match s1, s2 with
+  | EmptyString, _ => True
+  | _, EmptyString => False
+  | String c1 s1', String c2 s2' => c1 = c2 /\ is_prefix s1' s2'
+  end.
+
+Theorem is_prefix_refl : forall s, is_prefix s s. induction s; easy. Qed.
+
+Theorem is_prefix_trans : forall s1 s2 s3, is_prefix s1 s2 ->
+                          is_prefix s2 s3 -> is_prefix s1 s3.
+Proof.
+  induction s1, s2, s3; try easy.
+  intros.
+  simpl in *.
+  destruct H, H0; subst.
+  split.
+  reflexivity.
+  now apply IHs1 with s2.
+Qed.
+
+Add Relation String.string is_prefix
+  reflexivity  proved by is_prefix_refl
+  transitivity proved by is_prefix_trans
+as Prefix.
+
+Lemma prefix_body : forall s1 s2, is_prefix s1 s2 =
+  match s1, s2 with
+  | EmptyString, _ => True
+  | _, EmptyString => False
+  | String c1 s1', String c2 s2' => c1 = c2 /\ is_prefix s1' s2'
+  end.
+Proof.
+  now destruct s1, s2.
+Qed.
 
 Fixpoint is_substring needle haystack :=
-  prefix needle haystack = true \/
   match haystack with
-  | EmptyString => False
-  | String _ h' => is_substring needle h'
+  | EmptyString => needle = EmptyString
+  | String _ h' => is_prefix needle haystack \/
+                   is_substring needle h'
   end.
 
-Fixpoint is_found_loop pos needle haystack :=
+Theorem is_substring_refl : forall s, is_substring s s.
+Proof.
+  induction s.
+  - easy.
+  - simpl.
+    now left.
+Qed.
+
+Add Relation String.string is_substring
+  reflexivity proved by is_substring_refl
+as Substring.
+
+Lemma sub_body : forall needle haystack, is_substring needle haystack =
   match haystack with
-  | EmptyString => None
-  | String _ h' =>
-    if prefix needle haystack then
-      Some pos
-    else
-      is_found_loop (S pos) needle h'
+  | EmptyString => needle = EmptyString
+  | String _ h' => is_prefix needle haystack \/
+                   is_substring needle h'
+  end.
+Proof.
+  now destruct needle, haystack.
+Qed.
+
+Fixpoint is_found_at needle haystack pos :=
+  match needle, haystack, pos with
+  | EmptyString, _, Some 0 => True
+  | EmptyString, _, _ => False
+  | _, EmptyString, None => True
+  | _, EmptyString, _ => False
+  | _, _, Some 0 => is_prefix needle haystack
+  | _, String _ h', None => (~ is_prefix needle haystack) /\
+                             is_found_at needle h' None
+  | _, String _ h', Some (S i) =>
+    (~ is_prefix needle haystack) /\
+    is_found_at needle h' (Some i)
   end.
 
-Definition is_found_at := is_found_loop 0.
+Lemma found_body : forall needle haystack pos, is_found_at needle haystack pos =
+  match needle, haystack, pos with
+  | EmptyString, _, Some 0 => True
+  | EmptyString, _, _ => False
+  | _, EmptyString, None => True
+  | _, EmptyString, _ => False
+  | _, _, Some 0 => is_prefix needle haystack
+  | _, String _ h', None => (~ is_prefix needle haystack) /\
+                             is_found_at needle h' None
+  | _, String _ h', Some (S i) =>
+    (~ is_prefix needle haystack) /\
+    is_found_at needle h' (Some i)
+  end.
+Proof.
+  now destruct needle, haystack.
+Qed.

@@ -1,5 +1,6 @@
 -Q theories Evidence
 
 theories/Definitions.v
+theories/Warmup.v
 theories/Theorems.v
 theories/Evidence.v
