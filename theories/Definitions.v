@@ -13,48 +13,48 @@ Inductive prefix_2 : string -> string -> Prop :=
 
 
 Inductive sub_1 : string -> string -> Prop :=
-| S1 : forall pre post s1, sub_1 s1 (pre ++ s1 ++ post)%string
+| S1 : forall pre post needle, sub_1 needle (pre ++ needle ++ post)%string
 .
 
 Inductive sub_2 : string -> string -> Prop :=
-| S2_Prefix : forall n h, prefix_1 n h -> sub_2 n h
-| S2_pN : forall n h c, sub_2 (String c n) h -> sub_2 n h
+| S2_Prefix : forall needle haystack, prefix_1 needle haystack -> sub_2 needle haystack
+| S2_pN : forall needle haystack c, sub_2 (String c needle) haystack -> sub_2 needle haystack
 .
 
 Inductive sub_3 : string -> string -> Prop :=
-| S3_Prefix : forall n h, prefix_1 n h -> sub_3 n h
-| S3_sH : forall n h, sub_3 n h -> forall c, sub_3 n (String c h)
+| S3_Prefix : forall needle haystack, prefix_1 needle haystack -> sub_3 needle haystack
+| S3_sH : forall needle haystack, sub_3 needle haystack -> forall c, sub_3 needle (String c haystack)
 .
 
 Inductive sub_4 : string -> string -> Prop :=
-| S4 : forall s1 s2 pre post, s2 = (pre ++ s1 ++ post)%string -> sub_4 s1 s2
+| S4 : forall needle haystack pre post, haystack = (pre ++ needle ++ post)%string -> sub_4 needle haystack
 .
 
-Fixpoint sub_5 s1 s2 :=
-  match s1, s2 with
+Fixpoint sub_5 needle haystack :=
+  match needle, haystack with
   | EmptyString, _ => true
   | _, EmptyString => false
-  | _, String _ s2' => (prefix s1 s2 || sub_5 s1 s2')%bool
+  | _, String _ haystack' => (prefix needle haystack || sub_5 needle haystack')%bool
   end.
 
-Fixpoint sub_6 s1 s2 :=
-  match s1, s2 with
+Fixpoint sub_6 needle haystack :=
+  match needle, haystack with
   | EmptyString, _ => True
   | _, EmptyString => False
-  | _, String _ s2' => prefix s1 s2 = true \/ sub_6 s1 s2'
+  | _, String _ haystack' => prefix needle haystack = true \/ sub_6 needle haystack'
   end.
 
-Fixpoint sub_7 s1 s2 :=
-  match s2 with
-  | EmptyString => s1 = EmptyString
-  | String _ s2' => prefix s1 s2 = true \/ sub_7 s1 s2'
+Fixpoint sub_7 needle haystack :=
+  match haystack with
+  | EmptyString => needle = EmptyString
+  | String _ haystack' => prefix needle haystack = true \/ sub_7 needle haystack'
   end.
 
-Fixpoint sub_optimized (s1 s2 : string) :=
+Fixpoint sub_optimized (needle haystack : string) :=
   (* Needs to be extractable to OCaml *) True
 .
 
-Theorem correct : forall s1 s2, sub_optimized s1 s2 <-> sub_? s1 s2.
+Theorem correct : forall needle haystack, sub_optimized needle haystack <-> sub_? needle haystack.
 Proof.
 Admitted.
 
