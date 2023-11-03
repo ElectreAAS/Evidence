@@ -99,3 +99,15 @@ Lemma found_body : forall needle haystack pos, is_found_at needle haystack pos =
 Proof.
   now destruct needle, haystack.
 Qed.
+
+Fixpoint is_found_opt needle haystack :=
+  match needle, haystack with
+  | EmptyString, _ => Some 0
+  | _, EmptyString => None
+  | _, String _ h' =>
+      if prefix needle haystack then Some 0 else
+        match is_found_opt needle h' with
+        | None => None
+        | Some i => Some (S i)
+        end
+  end.

@@ -59,55 +59,61 @@ Proof.
     + now apply is_sub_P_n in H.
 Qed.
 
-Theorem prefix_eq : forall s1 s2, is_prefix s1 s2 <-> prefix s1 s2 = true.
+Theorem prefix_eq : forall n h, is_prefix n h <-> prefix n h = true.
 Proof.
-  induction s1, s2; split; intros; try easy.
+  induction n, h; split; intros; try easy.
   - simpl in H.
     destruct H; subst.
     simpl.
-    now induction (ascii_dec a0 a0); [apply IHs1 | contradiction].
+    now induction (ascii_dec a0 a0); [apply IHn | contradiction].
   - simpl in H.
     induction (ascii_dec a a0).
     + subst.
       simpl.
-      now apply IHs1 in H.
+      now apply IHn in H.
     + inversion H.
 Qed.
 
-Theorem sub_eq : forall s1 s2, is_substring s1 s2 <-> exists i, substring i (length s1) s2 = s1.
+Theorem sub_eq : forall n h, is_substring n h <-> exists i, substring i (length n) h = n.
 Proof.
-  induction s2; split; intros;
+  induction h; split; intros;
   try apply is_sub_empty.
-  - induction s1, H.
+  - induction n, H.
     now exists 0.
-  - now induction s1, H, x.
-  - induction s1.
+  - now induction n, H, x.
+  - induction n.
     + now exists 0.
     + induction H.
       * destruct H; subst.
         exists 0.
         now apply prefix_correct, prefix_eq.
-      * apply IHs2 in H.
+      * apply IHh in H.
         destruct H.
         now exists (S x).
-  - induction s1, H, x; try apply is_sub_empty.
+  - induction n, H, x; try apply is_sub_empty.
     + apply prefix_correct, prefix_eq in H.
       simpl.
       now left.
     + simpl.
       right.
-      apply IHs2.
+      apply IHh.
       now exists x.
 Qed.
 
-Theorem sub_found_eq : forall s1 s2, is_substring s1 s2 <-> exists i, is_found_at s1 s2 (Some i).
+Theorem found_prop_eq : forall n h p, is_found_at n h p <-> is_found_opt n h = p.
 Proof.
-  induction s2; split; intros.
-  - induction s1, H.
+  split.
+
+Admitted.
+
+Theorem sub_found_eq : forall n h, is_substring n h <-> exists i, is_found_at n h (Some i).
+Proof.
+  induction h; split; intros.
+  - induction n, H.
     now exists 0.
-  - induction s1, H.
+  - induction n, H.
     + easy.
     + inversion H.
-  - induction s1, H.
+  - induction n, H.
   (* TODO *)
 Abort.
