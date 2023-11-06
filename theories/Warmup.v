@@ -124,3 +124,17 @@ Proof.
     now rewrite IHs1.
 Qed.
 
+Fact is_sub_at_empty : forall s, is_sub_at "" s 0.
+Proof.
+  intros.
+  simpl.
+  now exists s.
+Qed.
+
+Fact is_sub_at_refl : forall s, is_sub_at s s 0.
+Proof.
+  intros.
+  simpl.
+  exists EmptyString.
+  now rewrite append_empty.
+Qed.
