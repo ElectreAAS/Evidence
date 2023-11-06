@@ -43,7 +43,7 @@ Qed.
 
 Theorem longer_sub : forall n h, is_substring n h -> length n <= length h.
 Proof.
-  induction n; induction h; intros;
+  induction n, h; intros;
     simpl;
     try apply le_0_n.
   - inversion H.
@@ -74,6 +74,27 @@ Proof.
     + inversion H.
 Qed.
 
+Theorem prefix_eq_not : forall n h, ~ is_prefix n h <-> prefix n h = false.
+Proof.
+  unfold not.
+  induction n, h; split; intros; try easy.
+  - simpl in H.
+    contradiction.
+  - simpl in H.
+    contradiction.
+  - simpl in *.
+    induction (ascii_dec a a0).
+    + apply IHn.
+      intro.
+      now apply H.
+    + reflexivity.
+  - destruct H0; subst.
+    simpl in H.
+    induction (ascii_dec a0 a0).
+    + now apply IHn in H.
+    + contradiction.
+Qed.
+
 Theorem sub_eq : forall n h, is_substring n h <-> exists i, substring i (length n) h = n.
 Proof.
   induction h; split; intros;
@@ -100,20 +121,79 @@ Proof.
       now exists x.
 Qed.
 
-Theorem found_prop_eq : forall n h p, is_found_at n h p <-> is_found_opt n h = p.
+Theorem longer_sub_at : forall n h i, is_sub_at n h i -> length n <= length h.
 Proof.
-  split.
+  intros.
+  rewrite is_sub_at_body in H.
+  destruct i.
+  - destruct H as [post H].
+    rewrite H.
+    rewrite append_len.
+    apply le_add.
+  - destruct H as [pre [post [H [H1 H2]]]].
+    rewrite H1.
+    rewrite append_len.
+    rewrite append_len.
+    rewrite add_sym.
+    rewrite <- PeanoNat.Nat.add_assoc.
+    apply le_add.
+Qed.
 
-Admitted.
-
-Theorem sub_found_eq : forall n h, is_substring n h <-> exists i, is_found_at n h (Some i).
+Theorem mirror_sub_at : forall s1 s2 i j, is_sub_at s1 s2 i ->
+                                          is_sub_at s2 s1 j ->
+                          s1 = s2 /\ i = j /\ i = 0.
 Proof.
-  induction h; split; intros.
-  - induction n, H.
-    now exists 0.
-  - induction n, H.
-    + easy.
-    + inversion H.
-  - induction n, H.
-  (* TODO *)
-Abort.
+  intros.
+  rewrite is_sub_at_body in H, H0.
+  destruct i, j.
+  - destruct H as [post_1 H1].
+    destruct H0 as [post_2 H2].
+    rewrite H1, append_assoc in H2.
+    apply append_eq_empty, append_null in H2 as [H2 _]; subst.
+    now rewrite append_empty.
+  - destruct H as [post_1 H1].
+    destruct H0 as [pre_2 [post_2 [H2 [H3 H4]]]].
+    apply string_len_eq in H3.
+    rewrite H1,
+            append_assoc,
+            append_len,
+            append_len,
+            H2,
+            add_sym,
+            <- PeanoNat.Nat.add_assoc,
+            (add_sym _ (S j))
+      in H3.
+    now apply neq_add in H3.
+  - destruct H as [pre_1 [post_1 [H2 [H3 H4]]]].
+    destruct H0 as [post_2 H1].
+    apply string_len_eq in H3.
+    rewrite H1,
+            append_assoc,
+            append_len,
+            append_len,
+            append_len,
+            H2,
+            add_sym,
+            <- PeanoNat.Nat.add_assoc,
+            (add_sym _ (S i))
+      in H3.
+    now apply neq_add in H3.
+  - destruct H as [pre_1 [post_1 [H1 [H2 H3]]]].
+    destruct H0 as [pre_2 [post_2 [G1 [G2 G3]]]].
+    apply string_len_eq in G2.
+    rewrite H2,
+            append_len,
+            append_len,
+            append_len,
+            append_len,
+            H1,
+            G1,
+            add_sym,
+            PeanoNat.Nat.add_assoc,
+            (add_sym (S i)),
+            <- PeanoNat.Nat.add_assoc,
+            <- PeanoNat.Nat.add_assoc,
+            <- PeanoNat.Nat.add_assoc
+      in G2.
+    now apply neq_add in G2.
+Qed.
