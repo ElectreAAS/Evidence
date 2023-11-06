@@ -131,10 +131,22 @@ Proof.
   now exists s.
 Qed.
 
-Fact is_sub_at_refl : forall s, is_sub_at s s 0.
+Fact is_sub_at_refl : forall s i, i = 0 <-> is_sub_at s s i.
 Proof.
-  intros.
-  simpl.
-  exists EmptyString.
-  now rewrite append_empty.
+  split; intros.
+  - subst.
+    exists EmptyString.
+    now rewrite append_empty.
+  - destruct i; try reflexivity.
+    rewrite is_sub_at_body in H.
+    destruct H as [pre [post [H1 [H2 H3]]]].
+    apply string_len_eq in H2.
+    rewrite append_len,
+            append_len,
+            H1,
+            PeanoNat.Nat.add_assoc,
+            (add_sym (S i)),
+            <- PeanoNat.Nat.add_assoc
+      in H2.
+    now apply neq_add in H2.
 Qed.

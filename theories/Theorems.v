@@ -121,21 +121,21 @@ Proof.
       now exists x.
 Qed.
 
-Theorem longer_sub_at : forall n h i, is_sub_at n h i -> length n <= length h.
+Theorem longer_sub_at : forall n h i, is_sub_at n h i -> i + length n <= length h.
 Proof.
   intros.
   rewrite is_sub_at_body in H.
   destruct i.
   - destruct H as [post H].
-    rewrite H.
-    rewrite append_len.
-    apply le_add.
-  - destruct H as [pre [post [H [H1 H2]]]].
-    rewrite H1.
-    rewrite append_len.
-    rewrite append_len.
-    rewrite add_sym.
-    rewrite <- PeanoNat.Nat.add_assoc.
+    now rewrite H,
+                append_len,
+                le_add.
+  - destruct H as [pre [post [H1 [H2 H3]]]].
+    rewrite H2,
+            append_len,
+            H1,
+            append_len,
+            PeanoNat.Nat.add_assoc.
     apply le_add.
 Qed.
 
