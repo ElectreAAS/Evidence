@@ -95,6 +95,18 @@ Proof.
     + contradiction.
 Qed.
 
+Theorem prefix_append : forall s post, prefix s (s ++ post) = true.
+Proof.
+  induction s; intros.
+  - simpl.
+    now rewrite <- prefix_eq, prefix_body.
+  - rewrite <- prefix_eq.
+    simpl.
+    split.
+    + reflexivity.
+    + now rewrite prefix_eq.
+Qed.
+
 Theorem sub_eq : forall n h, is_substring n h <-> exists i, substring i (length n) h = n.
 Proof.
   induction h; split; intros;
@@ -121,22 +133,44 @@ Proof.
       now exists x.
 Qed.
 
+Theorem prefix_longer : forall s1 s2, is_prefix s1 s2 -> length s1 <= length s2.
+Proof.
+  induction s1, s2; intros.
+  - reflexivity.
+  - apply le_0_n.
+  - destruct H.
+  - destruct H.
+    simpl.
+    apply le_n_S, IHs1, H0.
+Qed.
+
 Theorem longer_sub_at : forall n h i, is_sub_at n h i -> i + length n <= length h.
 Proof.
-  intros.
-  rewrite is_sub_at_body in H.
-  destruct i.
-  - destruct H as [post H].
-    now rewrite H,
-                append_len,
-                le_add.
-  - destruct H as [pre [post [H1 [H2 H3]]]].
-    rewrite H2,
+  induction i; intros.
+  - simpl in H.
+    now apply prefix_longer.
+  - repeat destruct H as [? H].
+    rewrite H0.
+    simpl.
+    apply le_n_S.
+    rewrite append_len,
             append_len,
             H1,
-            append_len,
             PeanoNat.Nat.add_assoc.
     apply le_add.
+Qed.
+
+Theorem mirror_prefix : forall s1 s2, is_prefix s1 s2 -> is_prefix s2 s1 -> s1 = s2.
+Proof.
+  induction s1, s2; intros.
+  - reflexivity.
+  - inversion H0.
+  - inversion H.
+  - apply string_eq.
+    destruct H, H0.
+    split.
+    assumption.
+    now apply IHs1.
 Qed.
 
 Theorem mirror_sub_at : forall s1 s2 i j, is_sub_at s1 s2 i ->
@@ -144,56 +178,156 @@ Theorem mirror_sub_at : forall s1 s2 i j, is_sub_at s1 s2 i ->
                           s1 = s2 /\ i = j /\ i = 0.
 Proof.
   intros.
-  rewrite is_sub_at_body in H, H0.
   destruct i, j.
-  - destruct H as [post_1 H1].
-    destruct H0 as [post_2 H2].
-    rewrite H1, append_assoc in H2.
-    apply append_eq_empty, append_null in H2 as [H2 _]; subst.
-    now rewrite append_empty.
-  - destruct H as [post_1 H1].
-    destruct H0 as [pre_2 [post_2 [H2 [H3 H4]]]].
-    apply string_len_eq in H3.
-    rewrite H1,
-            append_assoc,
-            append_len,
-            append_len,
-            H2,
-            add_sym,
-            <- PeanoNat.Nat.add_assoc,
-            (add_sym _ (S j))
-      in H3.
-    now apply neq_add in H3.
-  - destruct H as [pre_1 [post_1 [H2 [H3 H4]]]].
-    destruct H0 as [post_2 H1].
-    apply string_len_eq in H3.
-    rewrite H1,
-            append_assoc,
-            append_len,
-            append_len,
-            append_len,
-            H2,
-            add_sym,
-            <- PeanoNat.Nat.add_assoc,
-            (add_sym _ (S i))
-      in H3.
-    now apply neq_add in H3.
-  - destruct H as [pre_1 [post_1 [H1 [H2 H3]]]].
-    destruct H0 as [pre_2 [post_2 [G1 [G2 G3]]]].
-    apply string_len_eq in G2.
-    rewrite H2,
-            append_len,
-            append_len,
-            append_len,
-            append_len,
-            H1,
-            G1,
-            add_sym,
-            PeanoNat.Nat.add_assoc,
-            (add_sym (S i)),
-            <- PeanoNat.Nat.add_assoc,
-            <- PeanoNat.Nat.add_assoc,
-            <- PeanoNat.Nat.add_assoc
-      in G2.
-    now apply neq_add in G2.
+  - now split; [ apply mirror_prefix | ].
+  - simpl in H.
+    apply prefix_longer in H as H_false.
+    contradict H_false.
+    apply PeanoNat.Nat.lt_nge.
+    repeat destruct H0 as [? H0].
+    rewrite H1.
+    simpl.
+    repeat rewrite append_len.
+    rewrite PeanoNat.Nat.add_assoc.
+    rewrite (add_sym (length x0)).
+    rewrite <- PeanoNat.Nat.add_assoc.
+    rewrite <- plus_Sn_m.
+    apply le_add.
+  - simpl in H0.
+    apply prefix_longer in H0 as H_false.
+    contradict H_false.
+    apply PeanoNat.Nat.lt_nge.
+    repeat destruct H as [? H].
+    rewrite H1.
+    simpl.
+    repeat rewrite append_len.
+    rewrite PeanoNat.Nat.add_assoc.
+    rewrite (add_sym (length x0)).
+    rewrite <- PeanoNat.Nat.add_assoc.
+    rewrite <- plus_Sn_m.
+    apply le_add.
+  - repeat destruct H as [? H].
+    repeat destruct H0 as [? H0].
+    apply string_len_eq in H1.
+    contradict H1.
+    rewrite H3.
+    simpl.
+    rewrite append_len.
+    simpl.
+    repeat rewrite append_len.
+    (* such boring *)
+    rewrite add_sym.
+    rewrite PeanoNat.Nat.add_assoc.
+    rewrite (add_sym (length x3)).
+    rewrite <- PeanoNat.Nat.add_assoc.
+    rewrite <- PeanoNat.Nat.add_assoc.
+    rewrite <- plus_Sn_m.
+    rewrite <- plus_Sn_m.
+    rewrite plus_n_Sm.
+    rewrite <- PeanoNat.Nat.add_assoc.
+    rewrite plus_Sn_m.
+    rewrite add_sym.
+    apply PeanoNat.Nat.succ_add_discr.
+    (* wow *)
 Qed.
+
+(*
+
+Lemma sub_at_s_i : forall needle haystack c i, is_sub_at needle (String c haystack) (S i) ->
+                                               is_sub_at needle haystack i.
+Proof.
+  intros.
+  generalize dependent c.
+  generalize dependent needle.
+  generalize dependent haystack.
+  induction i; intros.
+  - destruct H as [pre [post [H1 [H2 H3]]]].
+    exists post.
+    destruct pre; try discriminate.
+    simpl in H1.
+    apply eq_add_S in H1.
+    destruct pre; try discriminate.
+    simpl in H2.
+    now apply string_eq in H2 as [eq H2].
+  - remember H as H'. clear HeqH'.
+    destruct H as [pre [post [H1 [H2 H3]]]].
+    destruct pre; try discriminate.
+    simpl in H1, H2.
+    apply eq_add_S in H1.
+    apply string_eq in H2 as [_ H2].
+    exists pre, post.
+    repeat split; try assumption.
+    simpl in H3.
+    destruct H3.
+    admit.
+Admitted.
+     *)
+     
+    
+  
+  (* TODO *)
+
+(* 
+Fact is_sub_at_empty_contra : forall s i, is_sub_at "" s i -> i = 0.
+Proof.
+  induction s, i; intros.
+  - reflexivity.
+  - now rewrite <- is_sub_at_refl in H.
+  - reflexivity.
+  - apply longer_sub_at in H as H4.
+    simpl in H4.
+    rewrite PeanoNat.Nat.add_0_r in H4.
+    apply le_S_n in H4.
+    destruct H as [pre [post [H1 [H2 H3]]]].
+    apply string_len_eq in H2.
+    rewrite append_len, H1 in H2.
+    simpl in H2.
+    apply eq_add_S in H2. *)
+(* 
+Theorem sub_at_index : forall needle haystack i,
+                       is_sub_at needle haystack i <-> index 0 needle haystack = Some i.
+Proof.
+  induction needle, haystack, i; split; intros.
+  - reflexivity.
+  - simpl.
+    now exists EmptyString.
+  - destruct H as [pre [post [H1 [H2 H3]]]].
+    apply string_len_eq in H2.
+    now rewrite append_len, H1 in H2.
+  - discriminate.
+  - reflexivity.
+  - now exists (String a haystack).
+  - apply is_sub_at_empty in H.
+  destruct H as [pre [post [H1 [H2 H3]]]].
+    apply string_len_eq in H2.
+    rewrite append_len, H1 in H2.
+    simpl in H2.
+    unfold not in H3.
+    destruct H3.
+    rewrite is_sub_at_body.
+    destruct i.
+    now exists (String a haystack).
+    simpl.
+    eexists.
+    eexists. *)
+
+    
+(*   
+  split.
+  - intros.
+    rewrite is_sub_at_body in H.
+    destruct i.
+    + destruct H as [post H].
+      destruct haystack, needle; try (reflexivity || discriminate).
+      simpl in H.
+      apply string_eq in H as [eq H]; subst.
+      simpl.
+      destruct (ascii_dec a0 a0); try contradiction.
+      now rewrite prefix_append.
+    + induction haystack.
+      * destruct H as [pre [post [H1 [H2 H3]]]].
+        unfold not in H3.
+        apply string_len_eq in H2.
+        now rewrite append_len, H1 in H2.
+      * destruct H as [pre [post [H1 [H2 H3]]]].
+        unfold not in H3. *)

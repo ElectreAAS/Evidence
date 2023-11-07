@@ -40,20 +40,22 @@ Qed.
 
 Fixpoint is_sub_at needle haystack i :=
   match i with
-  | 0 => exists post, haystack = (needle ++ post)%string
-  | S j => exists pre post,
-    length pre = i /\
-    haystack = (pre ++ needle ++ post)%string /\
-    ~ is_sub_at needle haystack j
+  | 0 => is_prefix needle haystack
+  | S j => exists c pre post,
+             let h := (pre ++ needle ++ post)%string in
+             haystack = String c h /\
+             length pre = j /\
+             is_sub_at needle h j
   end.
 
 Lemma is_sub_at_body : forall needle haystack i, is_sub_at needle haystack i =
   match i with
-  | 0 => exists post, haystack = (needle ++ post)%string
-  | S j => exists pre post,
-    length pre = i /\
-    haystack = (pre ++ needle ++ post)%string /\
-    ~ is_sub_at needle haystack j
+  | 0 => is_prefix needle haystack
+  | S j => exists c pre post,
+             let h := (pre ++ needle ++ post)%string in
+             haystack = String c h /\
+             length pre = j /\
+             is_sub_at needle h j
   end.
 Proof.
   now destruct needle, haystack, i.

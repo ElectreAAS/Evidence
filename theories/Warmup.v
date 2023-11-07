@@ -88,18 +88,25 @@ Proof.
     now subst.
 Qed.
 
-Fact string_neq : forall c s, s <> String c s.
+Fact string_neq_S : forall c s, s <> String c s.
 Proof.
   induction s.
   - discriminate.
   - rewrite string_eq.
-    now intros [H1 H2]; subst.
+    now intros []; subst.
 Qed.
 
 Fact string_len_eq : forall s1 s2, s1 = s2 -> length s1 = length s2.
 Proof.
   intros.
   now rewrite H.
+Qed.
+
+Fact string_len_neq : forall s1 s2, length s1 <> length s2 -> s1 <> s2.
+Proof.
+  unfold not.
+  intros.
+  now rewrite H0 in H.
 Qed.
 
 Fact append_eq_empty : forall s1 s2, (s1 = s1 ++ s2 -> s2 = "")%string.
@@ -124,29 +131,61 @@ Proof.
     now rewrite IHs1.
 Qed.
 
+Fact string_neq_S_pre : forall c pre s, s <> String c (pre ++ s).
+Proof.
+  intros.
+  apply string_len_neq.
+  simpl.
+  rewrite append_len.
+  now apply PeanoNat.Nat.succ_add_discr.
+Qed.
+
+Fact string_neq_S_post : forall c post s, s <> String c (s ++ post).
+Proof.
+  intros.
+  apply string_len_neq.
+  simpl.
+  rewrite append_len.
+  rewrite add_sym.
+  now apply PeanoNat.Nat.succ_add_discr.
+Qed.
+
+Fact string_neq_S_pp : forall c pre post s, s <> String c (pre ++ s ++ post).
+Proof.
+  intros.
+  apply string_len_neq.
+  simpl.
+  repeat rewrite append_len.
+  rewrite add_sym.
+  rewrite <- PeanoNat.Nat.add_assoc.
+  rewrite add_sym.
+  now apply PeanoNat.Nat.succ_add_discr.
+Qed.
+
 Fact is_sub_at_empty : forall s, is_sub_at "" s 0.
 Proof.
   intros.
-  simpl.
-  now exists s.
+  apply is_prefix_empty.
 Qed.
-
+ 
 Fact is_sub_at_refl : forall s i, i = 0 <-> is_sub_at s s i.
 Proof.
   split; intros.
   - subst.
-    exists EmptyString.
-    now rewrite append_empty.
+    apply is_prefix_refl.
   - destruct i; try reflexivity.
     rewrite is_sub_at_body in H.
-    destruct H as [pre [post [H1 [H2 H3]]]].
-    apply string_len_eq in H2.
+    repeat destruct H as [? H].
+    apply string_len_eq in H0.
+    simpl in H0.
     rewrite append_len,
             append_len,
             H1,
             PeanoNat.Nat.add_assoc,
-            (add_sym (S i)),
-            <- PeanoNat.Nat.add_assoc
-      in H2.
-    now apply neq_add in H2.
+            (add_sym i),
+            plus_n_Sm,
+            <- PeanoNat.Nat.add_assoc,
+            (add_sym i)
+      in H0.
+    now apply neq_add in H0.
 Qed.
