@@ -2,6 +2,29 @@ From Coq Require Import Ascii.
 From Coq Require Import Classes.RelationClasses.
 From Coq Require Import String.
 
+Definition smallest_such i P := P i /\ forall j, P j -> i <= j.
+
+Definition is_at needle haystack i := exists pre post,
+    haystack = (pre ++ needle ++ post)%string /\
+    length pre = i.
+
+Definition sub_new needle haystack i := smallest_such i (is_at needle haystack).
+
+(* Fixpoint sub_optim needle haystack :=
+  match blabla with
+  | .. => None
+  | .. => Some x
+  end.
+
+Theorem machin : forall needle haystack i,
+    sub_new needle haystack i ->
+    sub_optim needle haystack = Some i.
+
+Theorem machin2 : forall needle haystack,
+   sub_optim needle haystack = None ->
+   forall i, ~ sub_new needle haystack i.    
+*)
+
 Fixpoint is_prefix s1 s2 :=
   match s1, s2 with
   | EmptyString, _ => True
