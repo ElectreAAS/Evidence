@@ -3,6 +3,7 @@ From Coq Require Import String.
 
 From Evidence Require Import
      Definitions
+     Utils
      Warmup.
 
 Lemma is_sub_S_h : forall n h, is_substring n h ->
@@ -189,7 +190,7 @@ Proof.
     simpl.
     repeat rewrite append_len.
     rewrite PeanoNat.Nat.add_assoc.
-    rewrite (add_sym (length x0)).
+    rewrite (add_comm (length x0)).
     rewrite <- PeanoNat.Nat.add_assoc.
     rewrite <- plus_Sn_m.
     apply le_add.
@@ -202,7 +203,7 @@ Proof.
     simpl.
     repeat rewrite append_len.
     rewrite PeanoNat.Nat.add_assoc.
-    rewrite (add_sym (length x0)).
+    rewrite (add_comm (length x0)).
     rewrite <- PeanoNat.Nat.add_assoc.
     rewrite <- plus_Sn_m.
     apply le_add.
@@ -216,9 +217,9 @@ Proof.
     simpl.
     repeat rewrite append_len.
     (* such boring *)
-    rewrite add_sym.
+    rewrite add_comm.
     rewrite PeanoNat.Nat.add_assoc.
-    rewrite (add_sym (length x3)).
+    rewrite (add_comm (length x3)).
     rewrite <- PeanoNat.Nat.add_assoc.
     rewrite <- PeanoNat.Nat.add_assoc.
     rewrite <- plus_Sn_m.
@@ -226,67 +227,49 @@ Proof.
     rewrite plus_n_Sm.
     rewrite <- PeanoNat.Nat.add_assoc.
     rewrite plus_Sn_m.
-    rewrite add_sym.
+    rewrite add_comm.
     apply PeanoNat.Nat.succ_add_discr.
     (* wow *)
 Qed.
-
-(*
 
 Lemma sub_at_s_i : forall needle haystack c i, is_sub_at needle (String c haystack) (S i) ->
                                                is_sub_at needle haystack i.
 Proof.
   intros.
-  generalize dependent c.
-  generalize dependent needle.
-  generalize dependent haystack.
-  induction i; intros.
-  - destruct H as [pre [post [H1 [H2 H3]]]].
-    exists post.
-    destruct pre; try discriminate.
-    simpl in H1.
-    apply eq_add_S in H1.
-    destruct pre; try discriminate.
-    simpl in H2.
-    now apply string_eq in H2 as [eq H2].
-  - remember H as H'. clear HeqH'.
-    destruct H as [pre [post [H1 [H2 H3]]]].
-    destruct pre; try discriminate.
-    simpl in H1, H2.
-    apply eq_add_S in H1.
-    apply string_eq in H2 as [_ H2].
-    exists pre, post.
-    repeat split; try assumption.
-    simpl in H3.
-    destruct H3.
-    admit.
-Admitted.
-     *)
-     
-    
-  
-  (* TODO *)
+  repeat destruct H as [? H].
+  apply string_eq in H0 as [].
+  now rewrite H2.
+Qed.
 
-(* 
-Fact is_sub_at_empty_contra : forall s i, is_sub_at "" s i -> i = 0.
+Theorem new_mirror : forall s1 s2 i j, sub_new s1 s2 i -> sub_new s2 s1 j ->
+  s1 = s2 /\ i = j /\ i = 0.
 Proof.
-  induction s, i; intros.
-  - reflexivity.
-  - now rewrite <- is_sub_at_refl in H.
-  - reflexivity.
-  - apply longer_sub_at in H as H4.
-    simpl in H4.
-    rewrite PeanoNat.Nat.add_0_r in H4.
-    apply le_S_n in H4.
-    destruct H as [pre [post [H1 [H2 H3]]]].
-    apply string_len_eq in H2.
-    rewrite append_len, H1 in H2.
-    simpl in H2.
-    apply eq_add_S in H2. *)
-(* 
-Theorem sub_at_index : forall needle haystack i,
-                       is_sub_at needle haystack i <-> index 0 needle haystack = Some i.
+  unfold sub_new, smallest_such, is_at.
+  intros.
+  destruct H as [[pre_1 [post_1 [H1 H2]]] H3].
+  destruct H0 as [[pre_2 [post_2 [G1 G2]]] G3].
+  rewrite H1 in G1.
+  simpl in *.
+  destruct pre_1, pre_2, post_1, post_2.
+  1: (* correct case *)
+    subst.
+    now rewrite append_empty.
+  (* all other cases are impossible *)
+  all: contradict G1; clear;
+       repeat rewrite append_empty;
+       repeat rewrite append_assoc;
+       try apply (string_neq_S_pre, string_neq_S_post, string_neq_S_pp).
+  all: repeat rewrite append_S_assoc;
+       rewrite <- append_assoc;
+       apply (string_neq_S_pre, string_neq_S_post, string_neq_S_pp).
+Qed.
+
+Theorem new_at_index : forall needle haystack i,
+        sub_new needle haystack i <-> index 0 needle haystack = Some i.
 Proof.
+Admitted.
+
+(*
   induction needle, haystack, i; split; intros.
   - reflexivity.
   - simpl.
@@ -309,9 +292,9 @@ Proof.
     now exists (String a haystack).
     simpl.
     eexists.
-    eexists. *)
+    eexists.
 
-    
+
 (*   
   split.
   - intros.
@@ -331,3 +314,4 @@ Proof.
         now rewrite append_len, H1 in H2.
       * destruct H as [pre [post [H1 [H2 H3]]]].
         unfold not in H3. *)
+*)
