@@ -89,10 +89,10 @@ Proof.
   - intros.
     destruct H as [pre [post [H1 H2]]].
     rewrite <- H2.
-    destruct pre; [discriminate|].
-    destruct pre; [discriminate|].
-    destruct pre; [discriminate|].
-    destruct pre; [reflexivity|].
+    destruct pre; [discriminate | ].
+    destruct pre; [discriminate | ].
+    destruct pre; [discriminate | ].
+    destruct pre; [reflexivity | ].
     simpl.
     repeat apply le_n_S.
     apply le_0_n.
@@ -110,4 +110,28 @@ Proof.
   - intros.
     rewrite H.
     apply le_0_n.
+Qed.
+
+Lemma new_next : forall n c h i, sub_new n (String c h) (S i) -> sub_new n h i.
+Proof.
+  unfold sub_new, smallest_such, is_at.
+  intros.
+  destruct H as [[pre [post [H1 H2]]] H3].
+  destruct pre; [discriminate | ].
+  split.
+  - exists pre, post.
+    split.
+    + simpl in H1.
+      now apply string_eq in H1.
+    + simpl in H2.
+      now apply PeanoNat.Nat.succ_inj.
+  - intros.
+    destruct H as [pre_2 [post_2 [G1 G2]]].
+    apply le_S_n, H3.
+    exists (String a pre_2), post_2.
+    split.
+    + simpl in H1.
+      apply string_eq in H1 as [].
+      now apply string_eq.
+    + now rewrite <- G2.
 Qed.
