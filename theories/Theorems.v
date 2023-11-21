@@ -292,131 +292,61 @@ Qed.
 Theorem new_at_index : forall needle haystack i,
         sub_new needle haystack i <-> index 0 needle haystack = Some i.
 Proof.
-  (* TODO: proof is too long, simplify it. *)
   induction haystack; split; intros.
-  - unfold sub_new, smallest_such, is_at in H.
-    destruct H as [[pre [post [H1 H2]]] _].
+  - destruct H as [[pre [post [H1 H2]]] _].
     symmetry in H1.
     repeat apply append_null in H1 as [? H1].
     now subst.
-  - simpl in H.
-    destruct needle; [ | discriminate].
+  - destruct needle; [ | discriminate].
     inversion H.
     apply new_empty.
-  - destruct i.
-    + destruct needle; [reflexivity | ].
-      destruct H as [[pre [post [H1 H2]]] _].
-      destruct pre; [ | discriminate]; clear H2.
-      simpl in H1.
+  - destruct needle; [apply new_empty2 in H; now rewrite H | ].
+    destruct i.
+    + destruct H as [[pre [post [H1 H2]]] _].
+      destruct pre; [ | discriminate]. clear H2.
+      simpl in *.
       apply string_eq in H1 as [].
       subst a0.
-      simpl.
       destruct (ascii_dec a a); [ | contradiction].
-      rewrite H0.
-      now rewrite prefix_append2.
+      now rewrite H0, prefix_append2.
     + apply new_next in H as H1.
-      apply IHhaystack in H1.
-      destruct needle; [now apply new_empty2 in H | ].
+      apply IHhaystack in H1. clear IHhaystack.
       simpl.
-      rewrite H1.
-      destruct (ascii_dec a0 a); [ | reflexivity].
-      subst a0.
+      rewrite H1. clear H1.
+      destruct (ascii_dec a0 a); [subst a0 | reflexivity].
       case_eq (prefix needle haystack); intro; [ | reflexivity].
-      (* a0 = a and prefix needle haystack can't be true at the same time *)
-      exfalso.
-      assert (exists pre post, String a haystack = (pre ++ String a needle ++ post)%string /\ length pre = 0) as HObvious.
-      * apply prefix_eq, new_prefix in H0.
-        destruct H0 as [[pre_2 [post_2 [H2 H3]]] _].
-        destruct pre_2; [ | discriminate]; clear H3.
-        exists EmptyString, post_2.
-        simpl.
-        split; auto.
-        apply string_eq.
-        split; auto.
-      * unfold sub_new, smallest_such, is_at in H.
-        destruct H as [_ G3].
-        now apply G3 in HObvious.
-  - destruct i.
-    + destruct needle; [apply new_empty | ].
-      simpl in H.
-      destruct (ascii_dec a0 a).
-      * subst a0.
-        case_eq (prefix needle haystack); intro.
-        -- apply new_prefix.
-           apply prefix_s.
-           now apply prefix_eq.
-        -- rewrite H0 in H.
-           destruct (index 0 (String a needle) haystack); discriminate.
-      * destruct (index 0 (String a0 needle) haystack); discriminate.
-    + destruct needle; [discriminate | ].
-      simpl in H.
-      destruct (ascii_dec a0 a).
-      * subst a0.
-        case_eq (prefix needle haystack); intro; rewrite H0 in H; [discriminate | ].
-        case_eq (index 0 (String a needle) haystack); intros; rewrite H1 in H; [ | discriminate].
-        inversion H; subst.
-        apply IHhaystack in H1.
-        unfold sub_new, smallest_such, is_at in H1.
-        destruct H1 as [[pre [post [H2 H3]]] H4].
-        unfold sub_new, smallest_such, is_at.
-        split.
-        -- exists (String a pre), post.
-          simpl in *.
-          rewrite H2, H3.
-          split; reflexivity.
-        -- intros.
-           destruct H1 as [pre_2 [post_2 [H5 H6]]].
-           destruct pre_2.
-           ++ simpl in H5.
-              apply string_eq in H5 as [].
-              rewrite H5 in H0.
-              apply prefix_eq_not in H0.
-              contradict H0.
-              apply prefix_append.
-           ++ simpl in H5.
-              apply string_eq in H5 as [].
-              assert (exists pre post, haystack = (pre ++ String a needle ++ post)%string /\ length pre = j-1).
-              ** exists pre_2, post_2.
-                 split.
-                 assumption.
-                 rewrite <- H6.
-                 simpl.
-                 now rewrite PeanoNat.Nat.sub_0_r.
-              ** apply H4 in H7.
-                 destruct j; [discriminate | ].
-                 apply le_n_S in H7.
-                 simpl in H7.
-                 now rewrite PeanoNat.Nat.sub_0_r in H7.
-      * case_eq (index 0 (String a0 needle) haystack); intros; rewrite H0 in H; [ | discriminate].
-        inversion H; subst; clear H.
-        apply IHhaystack in H0.
-        unfold sub_new, smallest_such, is_at in H0.
-        destruct H0 as [[pre [post [H2 H3]]] H4].
-        unfold sub_new, smallest_such, is_at.
-        split.
-        -- exists (String a pre), post.
-           split.
-           simpl.
-           now apply string_eq.
-           now rewrite <- H3.
-        -- intros.
-           destruct H as [pre_2 [post_2 [H5 H6]]].
-           destruct pre_2.
-           ++ simpl in H5.
-              apply string_eq in H5 as [].
-              now rewrite H in n.
-           ++ simpl in H5.
-              apply string_eq in H5 as [].
-              assert (exists pre post, haystack = (pre ++ String a0 needle ++ post)%string /\ length pre = j-1).
-              ** exists pre_2, post_2.
-                 split.
-                 assumption.
-                 rewrite <- H6.
-                 simpl.
-                 now rewrite PeanoNat.Nat.sub_0_r.
-              ** apply H4 in H1.
-                 destruct j; [discriminate | ].
-                 apply le_n_S in H1.
-                 simpl in H1.
-                 now rewrite PeanoNat.Nat.sub_0_r in H1.
+      destruct H as [_ G3].
+      pose proof (G3 0) as G3.
+      apply PeanoNat.Nat.nle_succ_0 with i in G3; [contradiction | clear G3].
+      apply new_prefix.
+      apply prefix_s, prefix_eq, H0.
+  - destruct needle; [injection H; intros; subst; apply new_empty | ].
+    simpl in H.
+    destruct (ascii_dec a0 a).
+    1:   subst a.
+    1:   case_eq (prefix needle haystack); intros H'; rewrite H' in H.
+    1: { inversion H; subst.
+         apply new_prefix, prefix_s, prefix_eq, H'. }
+    all: case_eq (index 0 (String a0 needle) haystack); intros; rewrite H0 in H; [ | discriminate].
+    all: inversion H; subst; clear H.
+    all: apply IHhaystack in H0 as [[pre [post [H2 H3]]] H4].
+    all: split.
+    1:   exists (String a0 pre).
+    3:   exists (String a pre).
+    1,3: exists post.
+    1,2: simpl in *; now rewrite H2, H3.
+    all: intros.
+    all: destruct H as [pre_2 [post_2 [H5 H6]]].
+    all: destruct pre_2; simpl in H5; apply string_eq in H5 as [].
+    1: { rewrite H0 in H'.
+         apply prefix_eq_not in H'.
+         contradict H'.
+         apply prefix_append. }
+    2:   congruence.
+    all: destruct j; [discriminate | ].
+    all: simpl in H6.
+    all: apply eq_add_S in H6.
+    all: pose proof (H4 j) as H4.
+    all: apply le_n_S, H4.
+    all: now exists pre_2, post_2.
 Qed.
