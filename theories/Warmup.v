@@ -1,9 +1,14 @@
-From Coq Require Import Ascii.
-From Coq Require Import String.
+From Coq Require Import
+    Ascii
+    String
+.
 
 From Evidence Require Import
-  Definitions
-  Utils.
+    Definitions
+    Utils
+.
+
+Local Open Scope string_scope.
 
 Example is_sub_ex : is_substring "hi" "machine".
 Proof.
@@ -85,7 +90,7 @@ Fact new_ex : sub_new "hi" "machine" 3.
 Proof.
   unfold sub_new, smallest_such, is_at.
   split.
-  - now exists "mac"%string, "ne"%string.
+  - now exists "mac", "ne".
   - intros.
     destruct H as [pre [post [H1 H2]]].
     rewrite <- H2.

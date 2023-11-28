@@ -1,10 +1,17 @@
-From Coq Require Import Ascii.
-From Coq Require Import String.
+From Coq Require Import
+    Ascii
+    Nat
+    String
+.
 
 From Evidence Require Import
      Definitions
      Utils
-     Warmup.
+     Warmup
+.
+
+Local Open Scope string_scope.
+Local Open Scope nat_scope.
 
 Lemma is_sub_S_h : forall n h, is_substring n h ->
                    forall c, is_substring n (String c h).
@@ -253,7 +260,7 @@ Proof.
     clear H2. simpl in H1.
     unfold sub_new, smallest_such, is_at.
     split.
-    + exists EmptyString, post.
+    + exists "", post.
       simpl.
       rewrite string_eq.
       easy.
@@ -349,4 +356,118 @@ Proof.
     all: pose proof (H4 j) as H4.
     all: apply le_n_S, H4.
     all: now exists pre_2, post_2.
+Qed.
+
+Fact naive_empty : forall n h, n = "" -> naive n h = Some 0.
+Proof.
+  intros.
+  subst.
+  reflexivity.
+Qed.
+
+Local Fact naive_empty2 : forall h, naive "" h <> None.
+  intros.
+  now rewrite naive_empty.
+Qed.
+
+Lemma gget_prefix : forall needle haystack y c, is_prefix needle haystack -> y < length needle ->
+                      (gget2 needle y c =? gget2 haystack y c)%char = true.
+Proof.
+  intros.
+  rewrite Ascii.eqb_eq.
+  generalize dependent y.
+  generalize dependent haystack.
+  induction needle, haystack; intros.
+  - reflexivity.
+  - now apply PeanoNat.Nat.nlt_0_r in H0.
+  - contradiction.
+  - destruct H as []; subst a0.
+    simpl in H0.
+    unfold "<" in H0.
+    apply le_S_n in H0.
+    induction y; simpl.
+    + reflexivity.
+    + now apply IHneedle.
+Qed.
+
+Lemma inner_prefix : forall needle haystack xi y, is_prefix needle haystack -> xi = 0 -> y <= length needle ->
+                       inner needle haystack xi y = true.
+Proof.
+  intros.
+  subst xi.
+  induction y; [reflexivity | ].
+  destruct needle, haystack;
+    [now apply PeanoNat.Nat.nle_succ_0 in H1 |
+     now apply PeanoNat.Nat.nle_succ_0 in H1 |
+     contradiction | ].
+  destruct H as []; subst a0.
+  apply prefix_longer in H0 as H2.
+  simpl in H1.
+  apply le_S_n in H1.
+  simpl.
+  assert (forall x y z, x <= z -> x - y <? S z = true).
+  - intros.
+    unfold "<?".
+    apply PeanoNat.Nat.leb_le.
+    apply le_n_S.
+    transitivity x.
+    + apply PeanoNat.Nat.le_sub_l.
+    + assumption.
+  - rewrite H; [ | assumption].
+    case_eq (length needle - y); intros.
+    * rewrite Ascii.eqb_refl.
+      apply IHy.
+      simpl.
+      now apply le_S.
+    * rewrite gget_prefix.
+      -- apply IHy.
+         simpl.
+         now apply le_S.
+      -- assumption.
+      -- unfold "<".
+         rewrite <- H3.
+         apply PeanoNat.Nat.le_sub_l.
+Qed.
+
+Lemma loop_prefix : forall needle haystack x, is_prefix needle haystack -> length needle >= 1 -> x = length haystack -> loop needle haystack x = Some 0.
+Proof.
+  intros.
+  apply prefix_longer in H as H2.
+  destruct x; intros.
+  - rewrite <- H1 in H2.
+    apply le_zero in H2.
+    rewrite H2 in H0.
+    now apply PeanoNat.Nat.nle_succ_0 in H0.
+  - simpl.
+    rewrite H1.
+    rewrite PeanoNat.Nat.sub_diag.
+    simpl.
+    apply PeanoNat.Nat.ltb_ge in H2.
+    rewrite H2.
+    now rewrite inner_prefix.
+Qed.
+
+Lemma naive_prefix : forall needle haystack, is_prefix needle haystack -> naive needle haystack = Some 0.
+Proof.
+  induction needle; intros; [reflexivity | ].
+  apply prefix_longer in H as H1.
+  simpl in H1.
+  apply PeanoNat.Nat.lt_succ_r,
+        PeanoNat.Nat.succ_lt_mono,
+        PeanoNat.Nat.le_ngt,
+        PeanoNat.Nat.ltb_nlt
+    in H1.
+  simpl.
+  rewrite H1.
+  apply loop_prefix.
+  - assumption.
+  - apply PeanoNat.Nat.lt_0_succ.
+  - reflexivity.
+Qed.
+
+Fact naive_refl : forall needle haystack i, needle = haystack -> i = 0 -> naive needle haystack = Some i.
+Proof.
+  intros.
+  subst.
+  now apply naive_prefix.
 Qed.
